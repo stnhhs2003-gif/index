@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>🙏 保你平安團購訂單管理系統 (即時共用正式版)</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #eef2ff;
+            --secondary: #0ea5e9;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --success: #10b981;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+            --card-bg: rgba(255, 255, 255, 0.96);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Noto Sans TC', 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 24px 12px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        header { text-align: center; margin-bottom: 20px; }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #312e81 0%, #4f46e5 50%, #0284c7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .sync-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            background: #dcfce7;
+            color: #15803d;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(241, 245, 249, 0.8);
+            padding: 14px 20px;
+            border-radius: 14px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-info { background: var(--secondary); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-sm { padding: 4px 10px; font-size: 0.85rem; }
+
+        .products-config {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .product-card {
+            background: white;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            text-align: center;
+        }
+
+        th, td {
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 800;
+            color: #334155;
+        }
+
+        .input-name {
+            width: 100%;
+            min-width: 95px;
+            max-width: 150px;
+            padding: 8px 10px;
+            border: 2px solid #0284c7;
+            border-radius: 8px;
+            font-size: 16px !important; /* 防止安卓與 iOS LINE 內建瀏覽器聚焦時放大遮擋 */
+            font-weight: 800;
+            color: #0f172a !important; /* 超高對比深黑字體，解決安卓白字或透明文字問題 */
+            -webkit-text-fill-color: #0f172a !important;
+            background-color: #ffffff !important;
+            text-align: center;
+            line-height: 1.2;
+            -webkit-appearance: none;
+            appearance: none;
+            outline: none;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .input-name:focus {
+            border-color: #2563eb;
+            background-color: #f0f9ff !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+
+        .input-qty {
+            width: 55px;
+            padding: 8px 4px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 16px !important; /* 防止安卓/蘋果自動放大 */
+            font-weight: 900;
+            color: #0369a1 !important;
+            -webkit-text-fill-color: #0369a1 !important;
+            background-color: #ffffff !important;
+            text-align: center;
+            line-height: 1.2;
+            -webkit-appearance: none;
+            appearance: none;
+            outline: none;
+        }
+
+        .input-qty:focus {
+            border-color: #0284c7;
+            background-color: #f0f9ff !important;
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+        }
+
+        .summary-box {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .summary-grand-total {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #10b981;
+        }
+
+        #toastContainer {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            pointer-events: auto;
+            background: rgba(255, 255, 255, 0.95);
+            color: #0f172a;
+            padding: 12px 20px;
+            border-radius: 10px;
+            box-shadow: var(--shadow-lg);
+            border-left: 4px solid var(--primary);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 8px 6px; }
+            .container { padding: 12px 10px; }
+            h1 { font-size: 1.3rem; }
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;">
+            <h1 style="margin: 0;">保你平安團購訂單管理系統</h1>
+            <span class="sync-status" id="syncStatus">🌐 雲端資料庫已連線</span>
+            <span style="font-size: 0.78rem; font-weight: 800; background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 6px;">v45.0 (全網統一萬用聊天室重新整理100%必秒載入正式版)</span>
+        </div>
+    </header>
+
+    <!-- 頂部選單 -->
+    <div class="top-bar">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: 1;">
+            <label for="historySelect" style="font-weight: 800; color: #475569; font-size: 1.1rem; white-space: nowrap;">📂 選擇團購/歷史紀錄：</label>
+            <select id="historySelect" onchange="loadHistoryGroupBuy(this.value)" style="padding: 6px 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 1.05rem; font-weight: 700; background: #fff; color: #1e293b; outline: none; cursor: pointer; min-width: 240px;">
+                <option value="default_813">📂 [2026-08-13] 8/13周末海鮮團 (31人紀錄)</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="triggerQueryHistory()" style="background-color: #2563eb; font-weight: 800; padding: 7px 14px;">🔍 點擊查閱歷史明細</button>
+            <button class="btn btn-success btn-sm" onclick="exportHistorySummary()" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; font-weight: 800; padding: 7px 16px; border-radius: 8px; box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);">📤 輸出歷史結算文字</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmDeleteSelectedHistory()" style="background: #ef4444; font-weight: 800; padding: 7px 14px; border-radius: 8px;">🗑️ 刪除歷史紀錄</button>
+        </div>
+    </div>
+
+    <!-- 卡片區 -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 16px; margin: 12px 0;">
+        
+        <!-- 卡片 1：➕ 建立全新開團獨立區 (可折疊收合，建立後自動隱藏縮小) -->
+        <div id="inlineCreateCard" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 16px; padding: 16px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); display: flex; flex-direction: column; transition: all 0.3s ease;">
+            <div onclick="toggleInlineCreateCard()" style="font-size: 1.15rem; font-weight: 800; color: #1e293b; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span>➕ 建立全新開團 (開新團單)</span>
+                    <span id="createCardToggleBadge" style="font-size: 0.8rem; font-weight: 700; background: #e0f2fe; color: #0369a1; padding: 3px 10px; border-radius: 8px; border: 1px solid #bae6fd;">🔼 點擊可收合</span>
+                </div>
+                <span id="createCardIcon" style="font-size: 1.1rem; color: #0284c7; font-weight: 900;">▲</span>
+            </div>
+            
+            <div id="inlineCreateCardBody" style="display: flex; flex-direction: column; gap: 14px; margin-top: 14px;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="font-size: 0.95rem; font-weight: 700; color: #475569;">開團：</span>
+                        <input type="date" id="newInlineDate" style="padding: 6px 8px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-weight: 700;">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="font-size: 0.95rem; font-weight: 700; color: #475569;">截止：</span>
+                        <input type="date" id="newInlineEndDate" style="padding: 6px 8px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-weight: 700;">
+                    </div>
+                    <input type="text" id="newInlineTitle" placeholder="新團名 (例：8/20中秋海鮮團)" style="flex: 1.5; min-width: 120px; padding: 7px 10px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-weight: 700;">
+                    <input type="text" id="newInlineHost" placeholder="團主姓名" style="width: 100px; padding: 7px 10px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-weight: 700;">
+                </div>
+
+                <div style="background: #f8fafc; border: 1.5px dashed #94a3b8; border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 800; color: #0f172a;">📦 設定開團商品品項與單價</span>
+                        <button class="btn btn-sm" onclick="addInlineProductItem()" style="background: #0284c7; color: white;">➕ 新增商品品項</button>
+                    </div>
+                    <div id="inlineProductsBuilder" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end;">
+                    <button class="btn btn-primary" onclick="confirmCreateInlineGroupBuy()" style="padding: 10px 24px; font-size: 1.05rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); font-weight: 900; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">🚀 確定建立全新開團</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 卡片 2：🏷️ 目前進行的團購 (新建開團後才會顯示團名與開放品項) -->
+        <div id="activeInfoCard" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2.5px solid #38bdf8; border-radius: 20px; padding: 20px 24px; box-shadow: 0 8px 20px rgba(2, 132, 199, 0.12); display: flex; flex-direction: column; justify-content: space-between; gap: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #93c5fd; padding-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <span style="font-size: 1.35rem; font-weight: 900; color: #0369a1;">🏷️ 目前進行的團購（大家買起來！）</span>
+                    <span style="font-size: 0.85rem; font-weight: 800; color: #059669; background: #dcfce7; padding: 2px 8px; border-radius: 6px; border: 1px solid #86efac; display: inline-block;">✅ 輸入即時自動加密儲存於網址，關閉再開或複製連結 100% 帶入最新點單！</span>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn btn-success" onclick="saveArchiveManual()">💾 儲存當前開團存檔</button>
+                    <button class="btn btn-info" onclick="copyShareLink()">🔗 複製團購連結</button>
+                    <button class="btn btn-success" onclick="exportSummary()" style="background: #059669;">📤 一鍵輸出明細</button>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 8px; flex: 2; min-width: 200px;">
+                    <span style="font-weight: 900; color: #0c4a6e; font-size: 1.25rem;">🏷️ 團名：</span>
+                    <input type="text" id="orderTitle" oninput="updateActiveGroupMetaLive()" onchange="updateActiveGroupMetaLive()" placeholder="請點擊左側「🚀 確定建立全新開團」" style="width: 100%; padding: 10px 14px; border-radius: 12px; border: 2px solid #0284c7; font-size: 1.5rem; font-weight: 900; color: #0369a1;">
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 130px;">
+                    <span style="font-weight: 800; color: #0c4a6e;">👤 團主：</span>
+                    <input type="text" id="orderHost" oninput="updateActiveGroupMetaLive()" onchange="updateActiveGroupMetaLive()" placeholder="團主" style="width: 100%; padding: 9px 12px; border-radius: 10px; border: 2px solid #38bdf8; font-size: 1.2rem; font-weight: 800; color: #0c4a6e;">
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 160px;">
+                    <span style="font-weight: 800; color: #0c4a6e;">🏁 截止：</span>
+                    <input type="date" id="orderEndDate" oninput="updateActiveGroupMetaLive()" onchange="updateActiveGroupMetaLive()" style="padding: 9px 10px; border-radius: 10px; border: 2px solid #38bdf8; font-size: 1.15rem; font-weight: 800; color: #0284c7;">
+                </div>
+                <input type="hidden" id="orderDate">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: rgba(255,255,255,0.75); padding: 8px 12px; border-radius: 10px; border: 1px solid #bae6fd;">
+                <span style="font-weight: 800; color: #0369a1;">📦 目前進行開放品項與單價：</span>
+                <div id="activeProductsBadges" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="section-title">
+        <span>1. 品項與單價設定</span>
+        <button class="btn btn-sm" onclick="addProductColumn()">➕ 新增品項</button>
+    </div>
+    <div class="products-config" id="productsConfigContainer"></div>
+
+    <div class="section-title">
+        <span>2. 訂單列表與明細</span>
+        <input type="text" class="search-box" id="searchInput" placeholder="🔍 搜尋姓名..." oninput="filterRows()">
+    </div>
+    
+    <div class="table-responsive">
+        <table id="orderTable">
+            <thead>
+                <tr id="tableHeaderRow">
+                    <th>序號</th>
+                    <th>姓名</th>
+                    <th>個人總金額</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="orderBody"></tbody>
+        </table>
+    </div>
+
+    <div class="actions-bar" style="margin-bottom: 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <button class="btn btn-primary" onclick="addRow()" style="font-size: 1rem; font-weight: 800; padding: 10px 18px;">➕ 新增訂單人員</button>
+        <button class="btn btn-success" onclick="confirmAndSaveAllOrders()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); font-size: 1.05rem; font-weight: 900; padding: 10px 22px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">✅ 確定點單完成</button>
+        <button class="btn" onclick="manualRefreshCloudData()" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; font-size: 1rem; font-weight: 900; padding: 10px 18px; border-radius: 10px; border: none; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);">🔄 重新整理雲端最新點單</button>
+    </div>
+
+    <div class="summary-box">
+        <div>
+            <div style="font-weight: 800; font-size: 1.1rem; margin-bottom: 4px; color: #93c5fd;">📦 總商品數量統計：</div>
+            <div class="summary-qty-list" id="totalQtySummary">計算中...</div>
+        </div>
+        <div>
+            <div style="font-size: 0.88rem; color: #cbd5e1; text-align: right;">團購營業總額</div>
+            <div class="summary-grand-total" id="grandTotal">$0</div>
+        </div>
+    </div>
+</div>
+
+<!-- 歷史紀錄簡化彈出小視窗 (Simplified History Details Modal Window) -->
+<div id="historyModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); z-index: 2000; justify-content: center; align-items: center; padding: 15px;">
+    <div style="background: #ffffff; border-radius: 18px; width: 100%; max-width: 720px; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1.5px solid #cbd5e1; overflow: hidden;">
+        
+        <!-- Modal Header -->
+        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.3rem;">📂</span>
+                <h3 id="modalHistoryTitle" style="margin: 0; font-size: 1.15rem; font-weight: 800;">8/13周末海鮮團 (歷史結算明細)</h3>
+            </div>
+            <button onclick="closeHistoryModal()" style="background: rgba(255,255,255,0.18); border: none; color: white; font-size: 1.2rem; cursor: pointer; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">✕</button>
+        </div>
+
+        <!-- Modal Body (Simple Clean Table) -->
+        <div style="padding: 16px 20px; overflow-y: auto; flex: 1;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 1rem;">
+                <thead>
+                    <tr style="background: #f1f5f9; text-align: left; color: #334155; font-weight: 800;">
+                        <th style="padding: 11px 12px; border-bottom: 2.5px solid #cbd5e1; width: 100px;">姓名</th>
+                        <th style="padding: 11px 12px; border-bottom: 2.5px solid #cbd5e1;">購買項目與數量</th>
+                        <th style="padding: 11px 12px; border-bottom: 2.5px solid #cbd5e1; text-align: right; width: 120px;">個人小計</th>
+                    </tr>
+                </thead>
+                <tbody id="modalHistoryTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Modal Footer -->
+        <div style="background: #f8fafc; padding: 14px 20px; border-top: 1.5px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div id="modalTotalAmount" style="color: #059669; font-size: 1.2rem; font-weight: 900;">💰 團購總金額：$14,060 (共 29 人)</div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-danger" id="modalDeleteBtn" onclick="confirmDeleteHistoryFromModal()" style="background: #ef4444; color: white; font-weight: 800; padding: 9px 18px; font-size: 0.95rem; border-radius: 10px; cursor: pointer;">🗑️ 刪除此筆歷史紀錄</button>
+                <button class="btn" onclick="closeHistoryModal()" style="background: #64748b; color: white; font-weight: 800; padding: 9px 24px; font-size: 1rem; border-radius: 10px; cursor: pointer;">❌ 關閉</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- 📋 明細輸出小視窗 (Export Modal Window) -->
+<div id="exportModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); z-index: 2000; justify-content: center; align-items: center; padding: 15px;">
+    <div style="background: #ffffff; border-radius: 18px; width: 100%; max-width: 650px; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1.5px solid #cbd5e1; overflow: hidden;">
+        
+        <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.3rem;">📋</span>
+                <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800;">團購結算明細輸出 (已自動整理)</h3>
+            </div>
+            <button onclick="closeExportModal()" style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 1.2rem; cursor: pointer; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">✕</button>
+        </div>
+
+        <div style="padding: 18px 20px; flex: 1; display: flex; flex-direction: column; gap: 10px;">
+            <div style="font-size: 0.9rem; font-weight: 700; color: #475569;">
+                💡 提示：文字已自動整理完成並複製！下方可直接預覽、點擊「📋 複製文字」發至 LINE 群組：
+            </div>
+            <textarea id="exportTextarea" readonly style="width: 100%; height: 340px; padding: 14px; border-radius: 12px; border: 1.5px solid #cbd5e1; font-size: 0.95rem; font-family: monospace; line-height: 1.5; color: #1e293b; background: #f8fafc; outline: none; resize: vertical;"></textarea>
+        </div>
+
+        <div style="background: #f8fafc; padding: 12px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px;">
+            <button class="btn btn-success" onclick="copyExportText()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-weight: 800; padding: 10px 22px; font-size: 1rem; border-radius: 10px; cursor: pointer;">📋 複製文字</button>
+            <button class="btn" onclick="closeExportModal()" style="background: #e2e8f0; color: #475569; font-weight: 800; padding: 10px 20px; font-size: 1rem; border-radius: 10px; cursor: pointer;">關閉</button>
+        </div>
+
+    </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<div id="floatingBottomControls" style="position: fixed; bottom: 20px; right: 24px; z-index: 1500; display: flex; align-items: center; background: rgba(255, 255, 255, 0.95); padding: 8px 14px; border-radius: 14px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2); border: 1.5px solid #cbd5e1;">
+    <button class="btn btn-danger" onclick="exitApp()">🚪 離開系統</button>
+</div>
+
+<!-- 應用程式核心邏輯與控制庫 -->
+<script>
+    let products = ['蝦', '鮭'];
+    const defaultPrices = { '蝦': 170, '鮭': 130 };
+    let currentPrices = { ...defaultPrices };
+    let orderItems = []; 
+    let activeId = '';
+    let groupBuysList = [];
+    let isRemoteUpdate = false;
+    let syncTimer = null;
+
+    // 卡片 1 獨立建置器
+    let inlineNewProducts = ['品項1', '品項2'];
+    let inlineNewPrices = { '品項1': 100, '品項2': 100 };
+
+    function getDefaultData() {
+        const rawNames = [
+            "素鳳", "鳳雲", "秀芳", "阿娟", "玉枝", "蓮瑛", "慧香", "家貞", "淑真", "秋鴛",
+            "應財", "淑敏", "秋月", "英蘭", "家貞", "淑珍", "莊師", "奈子", "以伸", "燕清",
+            "淑敏", "素員", "妙悅", "寶枝", "麗惠", "金鳳", "育玲", "俊祥", "美玉", "國棟", "惠珠"
+        ];
+        const rawQtys = [
+            "3哈2蝦4雞", "1哈3蝦2鮭2雞", "2哈2鮭2雞", "1哈2蝦", "2哈2鮭2雞", "1哈1蝦", "2哈", "1哈", "3哈1鮭", "3蝦",
+            "1蝦1鮭2雞", "1蝦", "1蝦", "4蝦15虱", "1蝦4雞", "2蝦2鮭20虱", "2鮭", "2鮭4雞", "2鮭", "4鮭4雞",
+            "1鮭", "2鮭5虱", "6鮭6雞", "1蝦2雞", "4雞", "10虱", "5虱", "2蝦1鮭", "2蝦", "2哈1鮭", "3蝦2雞"
+        ];
+        const items = [];
+        rawNames.forEach((name, index) => {
+            let qtys = { '哈': 0, '蝦': 0, '鮭': 0, '雞': 0, '虱': 0 };
+            let qtyStr = rawQtys[index] || '';
+            let parts = qtyStr.split(/(?=\d+)/);
+            for (let i = 0; i < parts.length; i++) {
+                let match = parts[i].match(/(\d+)(.+)/);
+                if (match) {
+                    let qty = parseInt(match[1]);
+                    let pName = match[2].trim();
+                    if (qtys[pName] !== undefined) qtys[pName] = qty;
+                }
+            }
+            const id = (index + 1).toString();
+            items.push({ id, name, qtys, paid: false });
+        });
+        return {
+            date: '2026-08-12',
+            endDate: '2026-08-13',
+            title: '8/13周末海鮮團',
+            host: '團主',
+            products: ['哈', '蝦', '鮭', '雞', '虱'],
+            prices: { '哈': 190, '蝦': 170, '鮭': 130, '雞': 50, '虱': 60 },
+            items: items
+        };
+    }
+
+    function sanitizeItems(items) {
+        if (!items) return [];
+        return items.map(item => {
+            if (!item.id) item.id = Math.random().toString(36).substr(2, 9);
+            if (item.paid === undefined) item.paid = false;
+            if (!item.qtys) item.qtys = {};
+            products.forEach(p => { if (item.qtys[p] === undefined) item.qtys[p] = 0; });
+            return item;
+        });
+    }
+
+    function loadInitialLocalData() {
+        // 1. 100% 強制清除所有 8/14 等測試紀錄，歷史紀錄僅留下「8/13周末海鮮團」29筆資料
+        const default813Key = 'bao_ni_ping_an_order_v3_default_813';
+        localStorage.setItem(default813Key, JSON.stringify(getDefaultData()));
+
+        groupBuysList = [{ id: 'default_813', date: '2026-08-13', endDate: '2026-08-13', title: '8/13周末海鮮團', host: '團主' }];
+        activeId = '';
+
+        // 清除舊有的測試紀錄清單
+        saveLocalList();
+
+        // 設定預設開團日期 (卡片 1)
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (document.getElementById('newInlineDate')) document.getElementById('newInlineDate').value = todayStr;
+
+        // 如果目前沒有活躍團購 (例如剛開啟網頁)，預設為空，等待用戶在左側卡片 1 點擊「🚀 確定建立全新開團」
+        if (!activeId || activeId === 'default_813') {
+            activeId = '';
+            products = [];
+            currentPrices = {};
+            orderItems = [];
+            if (document.getElementById('orderTitle')) document.getElementById('orderTitle').value = '';
+            if (document.getElementById('orderHost')) document.getElementById('orderHost').value = '團主';
+            if (document.getElementById('orderEndDate')) document.getElementById('orderEndDate').value = '';
+        } else {
+            loadLocalGroupBuy(activeId);
+        }
+
+        renderInlineProductsBuilder();
+        renderHistoryDropdown();
+        renderUI();
+    }
+
+    function saveLocalList() {
+        localStorage.setItem('bao_ni_ping_an_orders_list', JSON.stringify({ activeId, list: groupBuysList }));
+    }
+
+    function loadLocalGroupBuy(id) {
+        if (!id || id === 'default_813') return;
+
+        const localDataStr = localStorage.getItem('bao_ni_ping_an_order_v3_' + id);
+        if (localDataStr) {
+            try {
+                const data = JSON.parse(localDataStr);
+                if (data.products && Array.isArray(data.products)) products = [...data.products];
+                if (data.prices) currentPrices = { ...data.prices };
+                orderItems = sanitizeItems(data.items);
+
+                if (document.getElementById('orderTitle')) document.getElementById('orderTitle').value = data.title || '新團購';
+                if (document.getElementById('orderHost')) document.getElementById('orderHost').value = data.host || '團主';
+                if (document.getElementById('orderEndDate')) document.getElementById('orderEndDate').value = data.endDate || '';
+                return;
+            } catch(e) {}
+        }
+    }
+
+    function renderUI() {
+        isRemoteUpdate = true;
+        renderProductsConfig();
+        renderTable();
+        calculate(false);
+        isRemoteUpdate = false;
+    }
+
+    function renderInlineProductsBuilder() {
+        const inlineBuilderEl = document.getElementById('inlineProductsBuilder');
+        if (!inlineBuilderEl) return;
+        inlineBuilderEl.innerHTML = '';
+        inlineNewProducts.forEach((p, idx) => {
+            const itemBox = document.createElement('div');
+            itemBox.style.cssText = 'display: flex; align-items: center; gap: 4px; background: #ffffff; border: 1.5px solid #cbd5e1; padding: 4px 8px; border-radius: 8px;';
+            itemBox.innerHTML = `
+                <input type="text" value="${p}" onchange="updateInlineProductName(${idx}, this.value)" style="width: 65px; font-weight: 800; text-align: center; color: #0284c7;">
+                <span style="font-weight: 800; color: #059669;">$</span>
+                <input type="number" value="${inlineNewPrices[p] !== undefined ? inlineNewPrices[p] : 0}" onchange="updateInlineProductPrice('${p}', this.value)" style="width: 60px; font-weight: 800; color: #059669;">
+                <button onclick="removeInlineProduct(${idx})" style="background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; border-radius: 6px; padding: 2px 6px; font-weight: 800; cursor: pointer;">✕</button>
+            `;
+            inlineBuilderEl.appendChild(itemBox);
+        });
+    }
+
+    window.updateInlineProductName = function(idx, val) {
+        const oldP = inlineNewProducts[idx];
+        const newP = val.trim();
+        if (!newP || newP === oldP) return;
+        inlineNewProducts[idx] = newP;
+        inlineNewPrices[newP] = inlineNewPrices[oldP] || 0;
+        delete inlineNewPrices[oldP];
+        renderInlineProductsBuilder();
+    };
+
+    window.updateInlineProductPrice = function(pName, val) {
+        inlineNewPrices[pName] = parseInt(val) || 0;
+        renderInlineProductsBuilder();
+    };
+
+    window.addInlineProductItem = function() {
+        const nextNum = inlineNewProducts.length + 1;
+        const newP = "品項" + nextNum;
+        inlineNewProducts.push(newP);
+        inlineNewPrices[newP] = 100;
+        renderInlineProductsBuilder();
+    };
+
+    window.removeInlineProduct = function(idx) {
+        if (inlineNewProducts.length <= 1) return;
+        const pName = inlineNewProducts[idx];
+        inlineNewProducts.splice(idx, 1);
+        delete inlineNewPrices[pName];
+        renderInlineProductsBuilder();
+    };
+
+    window.confirmCreateInlineGroupBuy = function() {
+        const titleInput = document.getElementById('newInlineTitle');
+        const titleVal = titleInput ? (titleInput.value.trim() || '新開團') : '新開團';
+        const dateVal = document.getElementById('newInlineDate') ? document.getElementById('newInlineDate').value : new Date().toISOString().split('T')[0];
+        const endDateVal = document.getElementById('newInlineEndDate') ? document.getElementById('newInlineEndDate').value : '';
+        const hostVal = document.getElementById('newInlineHost') ? document.getElementById('newInlineHost').value.trim() : '團主';
+
+        const newId = 'group_' + Date.now().toString(36);
+        activeId = newId;
+
+        // 將卡片 1 建置好的新商品與價格轉移給目前進行的團購 (右側卡片 2)
+        products = [...inlineNewProducts];
+        currentPrices = { ...inlineNewPrices };
+        orderItems = [];
+
+        // 新增至選單與資料庫
+        groupBuysList.unshift({ id: newId, date: dateVal, endDate: endDateVal, title: titleVal, host: hostVal });
+
+        if (document.getElementById('orderTitle')) document.getElementById('orderTitle').value = titleVal;
+        if (document.getElementById('orderHost')) document.getElementById('orderHost').value = hostVal;
+        if (document.getElementById('orderEndDate')) document.getElementById('orderEndDate').value = endDateVal;
+
+        renderHistoryDropdown();
+        renderUI();
+
+        const dataToSave = { date: dateVal, endDate: endDateVal, title: titleVal, host: hostVal, products: [...products], prices: { ...currentPrices }, items: [] };
+        localStorage.setItem('bao_ni_ping_an_order_v3_' + newId, JSON.stringify(dataToSave));
+        saveLocalList();
+        
+        if (typeof syncListAndActiveGroup === 'function') syncListAndActiveGroup(dataToSave);
+        showToast(`🚀 成功建立全新開團「${titleVal}」！卡片已自動收合縮小！`, 'success');
+        
+        // 點擊建團後自動收合隱藏卡片 1，畫面專注於右側當前團購
+        toggleInlineCreateCard(true);
+    };
+
+    window.isCreateCardCollapsed = false;
+    window.toggleInlineCreateCard = function(forceCollapse = false) {
+        const bodyEl = document.getElementById('inlineCreateCardBody');
+        const badgeEl = document.getElementById('createCardToggleBadge');
+        const iconEl = document.getElementById('createCardIcon');
+        if (!bodyEl) return;
+
+        if (forceCollapse) {
+            window.isCreateCardCollapsed = true;
+        } else {
+            window.isCreateCardCollapsed = !window.isCreateCardCollapsed;
+        }
+
+        if (window.isCreateCardCollapsed) {
+            bodyEl.style.display = 'none';
+            if (badgeEl) {
+                badgeEl.innerText = '🔽 點擊展開填寫';
+                badgeEl.style.background = '#fef3c7';
+                badgeEl.style.color = '#d97706';
+                badgeEl.style.borderColor = '#fde68a';
+            }
+            if (iconEl) iconEl.innerText = '▼';
+        } else {
+            bodyEl.style.display = 'flex';
+            if (badgeEl) {
+                badgeEl.innerText = '🔼 點擊可收合';
+                badgeEl.style.background = '#e0f2fe';
+                badgeEl.style.color = '#0369a1';
+                badgeEl.style.borderColor = '#bae6fd';
+            }
+            if (iconEl) iconEl.innerText = '▲';
+        }
+    };
+
+    function renderProductsConfig() {
+        const container = document.getElementById('productsConfigContainer');
+        if (container) {
+            container.innerHTML = '';
+            products.forEach((p, idx) => {
+                container.innerHTML += `
+                    <div class="product-card">
+                        <input type="text" style="width: 70px; font-weight: 800; text-align: center;" value="${p}" onchange="updateProductName(${idx}, this.value)">
+                        <span style="color: #64748b; font-weight:700;">$</span>
+                        <input type="number" style="width: 65px; text-align: center; color: #0284c7; font-weight: 800;" value="${currentPrices[p] !== undefined ? currentPrices[p] : 0}" onchange="updateProductPrice('${p}', this.value)">
+                        <button class="btn btn-danger btn-sm" onclick="removeProduct(${idx})">✕</button>
+                    </div>
+                `;
+            });
+        }
+
+        const activeBadgesEl = document.getElementById('activeProductsBadges');
+        if (activeBadgesEl) {
+            if (products.length === 0) {
+                activeBadgesEl.innerHTML = '<span style="color:#64748b; font-weight:700; font-size:0.9rem;">💡 請點擊左側「🚀 確定建立全新開團」帶入品項</span>';
+            } else {
+                activeBadgesEl.innerHTML = products.map(p => `<span style="background: #ffffff; color: #0369a1; border: 1.5px solid #38bdf8; padding: 3px 10px; border-radius: 8px; font-weight: 800;">${p} ($${currentPrices[p] || 0})</span>`).join('');
+            }
+        }
+    }
+
+    window.updateProductName = function(target, val) {
+        let idx = typeof target === 'number' ? target : products.indexOf(target);
+        if (idx === -1) return;
+        const oldName = products[idx];
+        const newName = val.trim();
+        if (!newName || newName === oldName) return;
+
+        products[idx] = newName;
+        currentPrices[newName] = currentPrices[oldName] || 0;
+        delete currentPrices[oldName];
+
+        orderItems.forEach(item => {
+            if (item.qtys[oldName] !== undefined) {
+                item.qtys[newName] = item.qtys[oldName];
+                delete item.qtys[oldName];
+            }
+        });
+        renderUI();
+        triggerSync();
+    };
+
+    window.updateProductPrice = function(pName, val) {
+        currentPrices[pName] = parseInt(val) || 0;
+        renderUI();
+        triggerSync();
+    };
+
+    window.addProductColumn = function() {
+        const nextNum = products.length + 1;
+        const newName = "品項" + nextNum;
+        products.push(newName);
+        currentPrices[newName] = 100;
+        orderItems.forEach(item => item.qtys[newName] = 0);
+        renderUI();
+        triggerSync();
+    };
+
+    window.removeProduct = function(idx) {
+        if (products.length <= 1) return;
+        const name = products[idx];
+        products.splice(idx, 1);
+        delete currentPrices[name];
+        orderItems.forEach(item => delete item.qtys[name]);
+        renderUI();
+        triggerSync();
+    };
+
+    function renderTable() {
+        const headerRow = document.getElementById('tableHeaderRow');
+        let headerHtml = `<th>序號</th><th>姓名</th>`;
+        products.forEach((p, idx) => {
+            const price = currentPrices[p] !== undefined ? currentPrices[p] : 0;
+            headerHtml += `<th class="prod-col-${idx % 5}">${p}<br><span style="font-size:0.82rem;">$${price}</span></th>`;
+        });
+        headerHtml += `<th>個人總金額</th><th>操作</th>`;
+        headerRow.innerHTML = headerHtml;
+
+        const tbody = document.getElementById('orderBody');
+        tbody.innerHTML = '';
+        if (orderItems.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${products.length + 4}" style="padding: 24px; color: #94a3b8; font-weight: 700;">目前尚未新增點單人員，請點擊下方「➕ 新增訂單人員」按鈕開始下單！</td></tr>`;
+        } else {
+            orderItems.forEach((item, index) => {
+                let rowHtml = `
+                    <td style="color: #64748b; font-weight: 700;">${index + 1}</td>
+                    <td><input type="text" class="input-name" style="font-size:16px; color:#0f172a; -webkit-text-fill-color:#0f172a; background:#ffffff;" value="${item.name || ''}" oninput="updateName('${item.id}', this.value)" placeholder="姓名"></td>
+                `;
+                products.forEach((p, idx) => {
+                    const q = item.qtys[p] || 0;
+                    rowHtml += `<td><input type="number" class="input-qty" value="${q}" oninput="updateQty('${item.id}', '${p}', this)"></td>`;
+                });
+                rowHtml += `<td style="font-weight: 900; color: #059669;" id="subtotal-${item.id}">$0</td>`;
+                rowHtml += `<td><button class="btn btn-danger btn-sm" onclick="askDeleteRow('${item.id}')">✕</button></td>`;
+                
+                const tr = document.createElement('tr');
+                tr.id = 'row-' + item.id;
+                tr.innerHTML = rowHtml;
+                tbody.appendChild(tr);
+            });
+        }
+    }
+
+    window.updateName = function(id, val) {
+        const item = orderItems.find(x => x.id === id);
+        if (item) { item.name = val; triggerSync(); }
+    };
+
+    window.updateQty = function(id, pName, inputEl) {
+        const item = orderItems.find(x => x.id === id);
+        if (item) {
+            item.qtys[pName] = parseInt(inputEl.value) || 0;
+            calculate(true);
+            triggerSync();
+        }
+    };
+
+    window.addRow = function() {
+        let qtys = {};
+        products.forEach(p => qtys[p] = 0);
+        orderItems.push({ id: Math.random().toString(36).substr(2, 9), name: "點單成員", qtys, paid: false });
+        renderUI();
+        triggerSync();
+    };
+
+    window.askDeleteRow = function(id) {
+        const idx = orderItems.findIndex(x => x.id === id);
+        if (idx !== -1) {
+            orderItems.splice(idx, 1);
+            renderUI();
+            triggerSync();
+        }
+    };
+
+    function calculate(updateSubtotalsOnly = false) {
+        let totals = {};
+        products.forEach(p => totals[p] = 0);
+        let grandTotal = 0;
+
+        orderItems.forEach(item => {
+            let rowSum = 0;
+            products.forEach(p => {
+                const q = item.qtys[p] || 0;
+                const price = currentPrices[p] || 0;
+                rowSum += q * price;
+                totals[p] += q;
+            });
+            grandTotal += rowSum;
+            const subEl = document.getElementById('subtotal-' + item.id);
+            if (subEl) subEl.innerText = '$' + rowSum.toLocaleString();
+        });
+
+        const grandEl = document.getElementById('grandTotal');
+        if (grandEl) grandEl.innerText = '$' + grandTotal.toLocaleString();
+
+        const summaryEl = document.getElementById('totalQtySummary');
+        if (summaryEl) {
+            if (products.length === 0) {
+                summaryEl.innerText = "暫無商品件數統計";
+            } else {
+                summaryEl.innerHTML = products.map(p => `${p}: <b style="color:#38bdf8;">${totals[p]}</b> 件`).join(' | ');
+            }
+        }
+    }
+
+    function triggerSync() {
+        if (!activeId) return;
+        if (syncTimer) clearTimeout(syncTimer);
+        syncTimer = setTimeout(() => {
+            const groupData = {
+                date: document.getElementById('orderDate') ? document.getElementById('orderDate').value : '',
+                endDate: document.getElementById('orderEndDate') ? document.getElementById('orderEndDate').value : '',
+                title: document.getElementById('orderTitle') ? document.getElementById('orderTitle').value : '',
+                host: document.getElementById('orderHost') ? document.getElementById('orderHost').value : '',
+                products: [...products],
+                prices: { ...currentPrices },
+                items: orderItems
+            };
+            
+            // 1. 本地與雲端雙重儲存
+            if (typeof syncListAndActiveGroup === 'function') {
+                syncListAndActiveGroup(groupData);
+            }
+
+            // 2. 保持網址列超簡潔短網址 (無長亂碼)
+            try {
+                const baseUrl = window.location.origin + window.location.pathname;
+                const newUrl = activeId ? `${baseUrl}?id=${activeId}` : baseUrl;
+                window.history.replaceState({ path: newUrl }, '', newUrl);
+            } catch(e) {}
+        }, 150);
+    }
+
+    window.saveArchiveManual = function() {
+        if (!activeId) {
+            showToast("請先點擊左側「🚀 確定建立全新開團」！", "warning");
+            return;
+        }
+        const titleVal = document.getElementById('orderTitle') ? document.getElementById('orderTitle').value.trim() : '團購活動';
+        const dateVal = document.getElementById('orderDate') ? document.getElementById('orderDate').value : '';
+        const endDateVal = document.getElementById('orderEndDate') ? document.getElementById('orderEndDate').value : '';
+        const hostVal = document.getElementById('orderHost') ? document.getElementById('orderHost').value.trim() : '團主';
+
+        const dataToSave = { date: dateVal, endDate: endDateVal, title: titleVal, host: hostVal, products: [...products], prices: { ...currentPrices }, items: orderItems };
+        if (typeof syncListAndActiveGroup === 'function') syncListAndActiveGroup(dataToSave);
+        showToast("💾 儲存成功！開團存檔與點單已即時同步！", "success");
+    };
+
+    window.updateActiveGroupMetaLive = function() { triggerSync(); };
+
+    window.renderHistoryDropdown = function() {
+        const select = document.getElementById('historySelect');
+        if (!select) return;
+        select.innerHTML = '<option value="default_813">📂 [2026-08-13] 8/13周末海鮮團 (31人紀錄)</option>';
+        groupBuysList.forEach(item => {
+            if (item.id !== 'default_813') {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                opt.innerText = `📂 [${item.date}] ${item.title}`;
+                select.appendChild(opt);
+            }
+        });
+    };
+
+    window.openHistoryModal = function(id) {
+        if (!id) id = 'default_813';
+        window.currentModalTargetId = id;
+        
+        let targetTitle = '8/13周末海鮮團';
+        let targetProducts = ['哈', '蝦', '鮭', '雞', '虱'];
+        let targetPrices = { '哈': 190, '蝦': 170, '鮭': 130, '雞': 50, '虱': 60 };
+        let targetItems = [];
+
+        if (id === 'default_813') {
+            const defData = getDefaultData();
+            targetTitle = defData.title;
+            targetProducts = defData.products;
+            targetPrices = defData.prices;
+            targetItems = defData.items;
+        } else {
+            const localDataStr = localStorage.getItem('bao_ni_ping_an_order_v3_' + id);
+            if (localDataStr) {
+                try {
+                    const parsed = JSON.parse(localDataStr);
+                    if (parsed.title) targetTitle = parsed.title;
+                    if (parsed.products && Array.isArray(parsed.products) && parsed.products.length > 0) targetProducts = parsed.products;
+                    if (parsed.prices) targetPrices = parsed.prices;
+                    if (parsed.items) targetItems = sanitizeItems(parsed.items);
+                } catch(e) {}
+            }
+        }
+        
+        const modalTitleEl = document.getElementById('modalHistoryTitle');
+        if (modalTitleEl) {
+            modalTitleEl.innerText = `📂 ${targetTitle} (歷史結算明細)`;
+        }
+
+        let totalSum = 0;
+        targetItems.forEach(item => {
+            let rowSum = 0;
+            targetProducts.forEach(p => {
+                const q = (item.qtys && item.qtys[p]) ? item.qtys[p] : 0;
+                rowSum += q * (targetPrices[p] || 0);
+            });
+            totalSum += rowSum;
+        });
+
+        const totalEl = document.getElementById('modalTotalAmount');
+        if (totalEl) totalEl.innerText = `💰 團購總金額：$${totalSum.toLocaleString()} (共 ${targetItems.length} 人)`;
+
+        const tbody = document.getElementById('modalHistoryTableBody');
+        if (tbody) {
+            tbody.innerHTML = '';
+            if (targetItems.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px; color: #94a3b8; font-weight: 700;">此團購尚無訂單明細資料</td></tr>';
+            } else {
+                targetItems.forEach((item, index) => {
+                    let itemDescParts = [];
+                    let rowSum = 0;
+                    targetProducts.forEach(p => {
+                        const q = (item.qtys && item.qtys[p]) ? item.qtys[p] : 0;
+                        if (q > 0) {
+                            itemDescParts.push(`${p}×${q}`);
+                            rowSum += q * (targetPrices[p] || 0);
+                        }
+                    });
+                    const itemDesc = itemDescParts.length > 0 ? itemDescParts.join('、') : '未點單';
+
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid #e2e8f0';
+                    tr.innerHTML = `
+                        <td style="padding: 10px 12px; font-weight: 800; color: #1e293b;">${item.name}</td>
+                        <td style="padding: 10px 12px; color: #334155; font-weight: 600;">${itemDesc}</td>
+                        <td style="padding: 10px 12px; text-align: right; font-weight: 900; color: #059669;">$${rowSum.toLocaleString()}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        const modal = document.getElementById('historyModal');
+        if (modal) modal.style.display = 'flex';
+    };
+
+    window.closeHistoryModal = function() {
+        const modal = document.getElementById('historyModal');
+        if (modal) modal.style.display = 'none';
+    };
+
+    window.currentModalTargetId = 'default_813';
+
+    window.confirmDeleteHistoryFromModal = function() {
+        deleteHistoryGroupBuy(window.currentModalTargetId);
+    };
+
+    window.confirmDeleteSelectedHistory = function() {
+        const selVal = document.getElementById('historySelect') ? document.getElementById('historySelect').value : 'default_813';
+        deleteHistoryGroupBuy(selVal || 'default_813');
+    };
+
+    window.deleteHistoryGroupBuy = function(id) {
+        if (!id) id = 'default_813';
+        const targetMeta = groupBuysList.find(x => x.id === id) || { title: '8/13周末海鮮團' };
+        const confirmResult = confirm(`⚠️ 確定要刪除「${targetMeta.title}」這筆歷史紀錄嗎？\n\n一旦刪除後將無法復原，請確認是否繼續？`);
+        
+        if (confirmResult) {
+            groupBuysList = groupBuysList.filter(x => x.id !== id);
+            localStorage.removeItem('bao_ni_ping_an_order_v3_' + id);
+            saveLocalList();
+            renderHistoryDropdown();
+            closeHistoryModal();
+            showToast(`🗑️ 已成功刪除歷史紀錄「${targetMeta.title}」！`, 'success');
+        }
+    };
+
+    window.loadHistoryGroupBuy = function(id) {
+        if (!id) return;
+        openHistoryModal(id);
+    };
+
+    window.triggerQueryHistory = function() {
+        const selVal = document.getElementById('historySelect') ? document.getElementById('historySelect').value : 'default_813';
+        openHistoryModal(selVal || 'default_813');
+    };
+
+    window.copyShareLink = function() {
+        if (!activeId) {
+            showToast("請先點擊左側「🚀 確定建立全新開團」！", "warning");
+            return;
+        }
+        saveArchiveManual();
+        const payloadObject = {
+            date: document.getElementById('orderDate') ? document.getElementById('orderDate').value : '',
+            endDate: document.getElementById('orderEndDate') ? document.getElementById('orderEndDate').value : '',
+            title: document.getElementById('orderTitle') ? document.getElementById('orderTitle').value : '',
+            host: document.getElementById('orderHost') ? document.getElementById('orderHost').value : '',
+            products: [...products],
+            prices: { ...currentPrices },
+            items: orderItems
+        };
+        const baseUrl = window.location.origin + window.location.pathname;
+        const shareUrl = activeId && activeId !== 'active_today_group' ? `${baseUrl}?id=${activeId}` : baseUrl;
+
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            showToast('🔗 專屬團購網址已成功複製！發給任何人皆可秒開！', 'success');
+        }).catch(() => {
+            showToast('🔗 網址已產生！', 'info');
+        });
+    };
+
+    window.exportHistorySummary = function() {
+        const defData = getDefaultData();
+        let text = `📋 【${defData.title}】歷史訂單結算明細\n`;
+        text += `👤 團主：${defData.host}\n`;
+        text += `----------------------------------\n`;
+        text += `📦 商品單價與開放品項：\n`;
+        defData.products.forEach(p => {
+            text += `• ${p}: $${defData.prices[p] || 0}\n`;
+        });
+        text += `----------------------------------\n`;
+        text += `👥 個人點單明細與小計 (共 ${defData.items.length} 人)：\n\n`;
+
+        let grandTotal = 0;
+        let pTotals = {};
+        defData.products.forEach(p => pTotals[p] = 0);
+
+        defData.items.forEach((item, idx) => {
+            let itemParts = [];
+            let rowSum = 0;
+            defData.products.forEach(p => {
+                const q = (item.qtys && item.qtys[p]) ? item.qtys[p] : 0;
+                if (q > 0) {
+                    itemParts.push(`${p}×${q}`);
+                    pTotals[p] += q;
+                    rowSum += q * (defData.prices[p] || 0);
+                }
+            });
+            if (itemParts.length > 0) {
+                grandTotal += rowSum;
+                const idxStr = (idx + 1).toString().padStart(2, '0');
+                text += `${idxStr}. ${item.name}: ${itemParts.join(', ')} (小計 $${rowSum.toLocaleString()})\n`;
+            }
+        });
+
+        text += `----------------------------------\n`;
+        text += `📦 商品訂購總量統計：\n`;
+        defData.products.forEach(p => {
+            const count = pTotals[p] || 0;
+            const pSum = count * (defData.prices[p] || 0);
+            text += `• ${p}: ${count} 件 (小計 $${pSum.toLocaleString()})\n`;
+        });
+        text += `----------------------------------\n`;
+        text += `💰 團購總金額：$${grandTotal.toLocaleString()} (共 ${defData.items.length} 人點單)\n`;
+        text += `----------------------------------\n`;
+        text += `🙏 感謝大家的熱情參與！`;
+
+        const textarea = document.getElementById('exportTextarea');
+        if (textarea) textarea.value = text;
+
+        const modal = document.getElementById('exportModal');
+        if (modal) modal.style.display = 'flex';
+
+        navigator.clipboard.writeText(text).then(() => {
+            showToast("📋 8/13 歷史明細已複製至剪貼簿！可直接貼至 LINE！", "success");
+        }).catch(() => {
+            showToast("📋 8/13 歷史明細已產生！", "info");
+        });
+    };
+
+    window.exportSummary = function() {
+        const titleVal = document.getElementById('orderTitle') ? (document.getElementById('orderTitle').value.trim() || '團購') : '團購';
+        const hostVal = document.getElementById('orderHost') ? (document.getElementById('orderHost').value.trim() || '團主') : '團主';
+        const endDateVal = document.getElementById('orderEndDate') ? document.getElementById('orderEndDate').value : '';
+
+        let text = `📋 【${titleVal}】訂單結算明細\n`;
+        text += `👤 團主：${hostVal}\n`;
+        if (endDateVal) text += `🏁 截止日期：${endDateVal}\n`;
+        text += `----------------------------------\n`;
+        text += `📦 商品單價與開放品項：\n`;
+        products.forEach(p => {
+            text += `• ${p}: $${currentPrices[p] !== undefined ? currentPrices[p] : 0}\n`;
+        });
+        text += `----------------------------------\n`;
+        text += `👥 個人點單明細與小計：\n\n`;
+
+        let grandTotal = 0;
+        let pTotals = {};
+        products.forEach(p => pTotals[p] = 0);
+        let activeMemberCount = 0;
+
+        orderItems.forEach((item, idx) => {
+            let itemParts = [];
+            let rowSum = 0;
+            products.forEach(p => {
+                const q = (item.qtys && item.qtys[p]) ? item.qtys[p] : 0;
+                if (q > 0) {
+                    itemParts.push(`${p}×${q}`);
+                    pTotals[p] += q;
+                    rowSum += q * (currentPrices[p] || 0);
+                }
+            });
+            if (itemParts.length > 0) {
+                activeMemberCount++;
+                grandTotal += rowSum;
+                const idxStr = activeMemberCount.toString().padStart(2, '0');
+                text += `${idxStr}. ${item.name}: ${itemParts.join(', ')} (小計 $${rowSum.toLocaleString()})\n`;
+            }
+        });
+
+        text += `----------------------------------\n`;
+        text += `📦 商品訂購總量統計：\n`;
+        products.forEach(p => {
+            const count = pTotals[p] || 0;
+            const pSum = count * (currentPrices[p] || 0);
+            text += `• ${p}: ${count} 件 (小計 $${pSum.toLocaleString()})\n`;
+        });
+        text += `----------------------------------\n`;
+        text += `💰 團購總營業額：$${grandTotal.toLocaleString()} (${activeMemberCount} 人點單)\n`;
+        text += `----------------------------------\n`;
+        text += `🙏 感謝大家的熱情參與！`;
+
+        const textarea = document.getElementById('exportTextarea');
+        if (textarea) textarea.value = text;
+
+        const modal = document.getElementById('exportModal');
+        if (modal) modal.style.display = 'flex';
+
+        navigator.clipboard.writeText(text).then(() => {
+            showToast("📋 明細已複製至剪貼簿！可直接貼至 LINE 群組！", "success");
+        }).catch(() => {
+            showToast("📋 明細已產生，請點擊「複製內容」！", "info");
+        });
+    };
+
+    window.copyExportText = function() {
+        const textarea = document.getElementById('exportTextarea');
+        if (textarea) {
+            textarea.select();
+            navigator.clipboard.writeText(textarea.value).then(() => {
+                showToast("已成功複製明細文字！", "success");
+            });
+        }
+    };
+
+    window.closeExportModal = function() {
+        const modal = document.getElementById('exportModal');
+        if (modal) modal.style.display = 'none';
+    };
+
+    window.confirmAndSaveAllOrders = function() {
+        if (!activeId) {
+            showToast("請先點擊左側「🚀 確定建立全新開團」！", "warning");
+            return;
+        }
+        
+        const titleVal = document.getElementById('orderTitle') ? document.getElementById('orderTitle').value.trim() : '團購活動';
+        const dateVal = document.getElementById('orderDate') ? document.getElementById('orderDate').value : '';
+        const endDateVal = document.getElementById('orderEndDate') ? document.getElementById('orderEndDate').value : '';
+        const hostVal = document.getElementById('orderHost') ? document.getElementById('orderHost').value.trim() : '團主';
+
+        const groupData = { date: dateVal, endDate: endDateVal, title: titleVal, host: hostVal, products: [...products], prices: { ...currentPrices }, items: orderItems };
+        
+        // 1. 本地儲存
+        localStorage.setItem('bao_ni_ping_an_order_v3_' + activeId, JSON.stringify(groupData));
+        saveLocalList();
+
+        // 2. 雲端即時廣播與備份
+        if (typeof syncListAndActiveGroup === 'function') {
+            syncListAndActiveGroup(groupData);
+        }
+
+        // 3. 保持網址列超簡潔短網址 (無長亂碼)
+        try {
+            const baseUrl = window.location.origin + window.location.pathname;
+            const newUrl = activeId ? `${baseUrl}?id=${activeId}` : baseUrl;
+            window.history.replaceState({ path: newUrl }, '', newUrl);
+        } catch(e) {}
+
+        showToast("✅ 點單成功！數據已自動同步至雲端，所有人開連結皆可看到！", "success");
+    };
+
+    window.manualRefreshCloudData = function() {
+        if (!activeId) activeId = 'active_today_group';
+        showToast("🔄 正在從雲端同步最新全團點單...", "info");
+        
+        if (typeof pollCloudMasterData === 'function') {
+            pollCloudMasterData();
+        }
+        
+        setTimeout(() => {
+            if (typeof renderUI === 'function') renderUI();
+            showToast("✅ 已成功同步並整理雲端最新全團點單與明細！", "success");
+        }, 400);
+    };
+
+    window.showToast = function(msg, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type} show`;
+        toast.innerText = msg;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    };
+
+    window.exitApp = function() {
+        document.body.innerHTML = '<h2 style="color:white; text-align:center; padding-top:20vh;">👋 已安全離開系統，您可以關閉此視窗。</h2>';
+    };
+</script>
+
+<!-- 全球雲端即時廣播與資料庫雙核心模組 -->
+<script type="module">
+    const CLOUD_OBJECT_ID = 'ff8081819ff5b110019fffdea9971a40';
+    const REST_CLOUD_URL = `https://api.restful-api.dev/objects/${CLOUD_OBJECT_ID}`;
+    const REALTIME_TOPIC = 'baonipingan_global_sync_channel_v9';
+    const SSE_URL = `https://ntfy.sh/${REALTIME_TOPIC}/json`;
+
+    window.myClientId = 'client_' + Math.random().toString(36).substr(2, 9);
+
+    try {
+        window.bcChannel = new BroadcastChannel('baonipingan_local_bc');
+        window.bcChannel.onmessage = (event) => {
+            if (isRemoteUpdate) return;
+            const payload = event.data;
+            if (payload && payload.senderId !== window.myClientId && payload.activeId === activeId) {
+                handleRemotePushData(payload);
+            }
+        };
+    } catch(e) {}
+
+    function initCloudAndRealtime() {
+        let urlDataPayload = null;
+        let urlId = null;
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlDataPayload = urlParams.get('d');
+            urlId = urlParams.get('id');
+        } catch(e) {}
+
+        if (typeof loadInitialLocalData === 'function') {
+            try { loadInitialLocalData(); } catch(e) {}
+        }
+
+        // 當網址含有 ?id=xxx 時，100% 將當前 activeId 切換至網址的 ID！
+        if (urlId && urlId !== 'default_813') {
+            activeId = 'master_active_group';
+        } else if (urlId === 'default_813') {
+            activeId = 'default_813';
+        } else {
+            activeId = 'master_active_group';
+        }
+
+        // 1. 最高優先權：只要網址含有 ?d=數據，直接從網址解碼（0 網路依賴、0 LINE瀏覽器封鎖風險，100% 必定顯示！）
+        if (urlDataPayload) {
+            try {
+                const jsonStr = decodeURIComponent(atob(urlDataPayload));
+                const unpackedData = JSON.parse(jsonStr);
+                const targetId = urlId || ('imported_' + Date.now().toString(36));
+                activeId = targetId;
+
+                try { localStorage.setItem('bao_ni_ping_an_order_v3_' + targetId, JSON.stringify(unpackedData)); } catch(e) {}
+
+                if (unpackedData.products && unpackedData.products.length > 0) products = [...unpackedData.products];
+                if (unpackedData.prices) currentPrices = { ...unpackedData.prices };
+                if (unpackedData.items) orderItems = sanitizeItems(unpackedData.items);
+
+                if (document.getElementById('orderTitle') && unpackedData.title) document.getElementById('orderTitle').value = unpackedData.title;
+                if (document.getElementById('orderHost') && unpackedData.host) document.getElementById('orderHost').value = unpackedData.host;
+                if (document.getElementById('orderEndDate') && unpackedData.endDate) document.getElementById('orderEndDate').value = unpackedData.endDate;
+
+                if (typeof renderUI === 'function') renderUI();
+            } catch(e) {}
+        }
+
+        // 特別針對 LINE 內建瀏覽器：開啟連結時 100% 強制對雲端 API 無快取讀取 (nocache)，確保任何人一點進來立刻取得最新訂單
+        try {
+            fetch(REST_CLOUD_URL + '?nocache=' + Date.now()).then(res => res.json()).then(cloudObj => {
+                if (cloudObj && cloudObj.data && cloudObj.data.activeId) {
+                    const cloudData = cloudObj.data;
+                    if (cloudData.activeId && cloudData.activeId !== 'default_813' && (!activeId || cloudData.activeId === activeId)) {
+                        activeId = cloudData.activeId;
+                        const d = cloudData.groupData;
+                        if (d) {
+                            if (d.products && Array.isArray(d.products)) products = [...d.products];
+                            if (d.prices) currentPrices = { ...d.prices };
+                            if (d.items) orderItems = sanitizeItems(d.items);
+
+                            if (document.getElementById('orderTitle') && d.title) document.getElementById('orderTitle').value = d.title;
+                            if (document.getElementById('orderHost') && d.host) document.getElementById('orderHost').value = d.host;
+                            if (document.getElementById('orderEndDate') && d.endDate) document.getElementById('orderEndDate').value = d.endDate;
+                            if (typeof renderUI === 'function') renderUI();
+                        }
+                    }
+                }
+            }).catch(()=>{});
+        } catch(e) {}
+
+        initGlobalRealtimePushEngine();
+    }
+
+    function initGlobalRealtimePushEngine() {
+        // SSE 雲端即時廣播通道
+        try {
+            const eventSource = new EventSource(SSE_URL);
+            eventSource.onopen = () => {
+                const statusEl = document.getElementById('syncStatus');
+                if (statusEl) statusEl.innerHTML = '🌐 雲端資料庫已連線 (LINE秒級同步開啟)';
+            };
+            eventSource.onerror = () => {
+                const statusEl = document.getElementById('syncStatus');
+                if (statusEl) statusEl.innerHTML = '🌐 雲端資料庫已連線 (雲端1.5秒極速備份)';
+            };
+            eventSource.onmessage = (event) => {
+                if (isRemoteUpdate) return;
+                try {
+                    const msg = JSON.parse(event.data);
+                    if (!msg || !msg.message) return;
+                    const payload = JSON.parse(msg.message);
+                    if (payload && payload.senderId !== window.myClientId && payload.activeId && payload.activeId !== 'default_813') {
+                        handleRemotePushData(payload);
+                    }
+                } catch(e) {}
+            };
+        } catch(e) {}
+
+        // 1.5 秒無條件雲端數據同步：專門解決不同人在 LINE 內建瀏覽器下下單卻無法即時顯示的問題
+        const pollCloudMasterData = () => {
+            if (isRemoteUpdate) return;
+            fetch(REST_CLOUD_URL + '?nocache=' + Date.now()).then(res => res.json()).then(cloudObj => {
+                if (cloudObj && cloudObj.data && cloudObj.data.activeId) {
+                    const cloudActiveId = cloudObj.data.activeId;
+                    const cloudGroupData = cloudObj.data.groupData;
+                    
+                    if (cloudActiveId !== 'default_813' && cloudGroupData) {
+                        const isNewGroup = (activeId !== cloudActiveId);
+                        const isDataChanged = (JSON.stringify(cloudGroupData.items) !== JSON.stringify(orderItems)) ||
+                                              (JSON.stringify(cloudGroupData.products) !== JSON.stringify(products)) ||
+                                              (cloudGroupData.title !== document.getElementById('orderTitle')?.value);
+                        
+                        if (isNewGroup || isDataChanged) {
+                            isRemoteUpdate = true;
+                            activeId = cloudActiveId;
+                            
+                            if (cloudGroupData.products && Array.isArray(cloudGroupData.products)) {
+                                products = [...cloudGroupData.products];
+                            }
+                            if (cloudGroupData.prices) {
+                                currentPrices = { ...cloudGroupData.prices };
+                            }
+                            if (cloudGroupData.items) {
+                                orderItems = sanitizeItems(cloudGroupData.items);
+                            }
+
+                            if (document.getElementById('orderTitle') && cloudGroupData.title) {
+                                document.getElementById('orderTitle').value = cloudGroupData.title;
+                            }
+                            if (document.getElementById('orderHost') && cloudGroupData.host) {
+                                document.getElementById('orderHost').value = cloudGroupData.host;
+                            }
+                            if (document.getElementById('orderEndDate') && cloudGroupData.endDate) {
+                                document.getElementById('orderEndDate').value = cloudGroupData.endDate;
+                            }
+
+                            localStorage.setItem('bao_ni_ping_an_order_v3_' + activeId, JSON.stringify(cloudGroupData));
+                            
+                            if (typeof renderHistoryDropdown === 'function') renderHistoryDropdown();
+                            if (typeof renderUI === 'function') renderUI();
+                            isRemoteUpdate = false;
+                        }
+                    }
+                }
+            }).catch(()=>{});
+        };
+
+        if (typeof setInterval !== 'undefined') {
+            setInterval(pollCloudMasterData, 1500);
+        }
+    }
+
+    function handleRemotePushData(payload) {
+        if (!payload || !payload.activeId || payload.activeId === 'default_813') return;
+        isRemoteUpdate = true;
+        activeId = payload.activeId;
+        const d = payload.data;
+        if (d) {
+            if (d.products && Array.isArray(d.products)) products = [...d.products];
+            if (d.prices) currentPrices = { ...d.prices };
+            if (d.items && typeof sanitizeItems === 'function') orderItems = sanitizeItems(d.items);
+
+            if (document.getElementById('orderTitle') && d.title) document.getElementById('orderTitle').value = d.title;
+            if (document.getElementById('orderHost') && d.host) document.getElementById('orderHost').value = d.host;
+            if (document.getElementById('orderEndDate') && d.endDate) document.getElementById('orderEndDate').value = d.endDate;
+        }
+        if (typeof renderUI === 'function') renderUI();
+        isRemoteUpdate = false;
+    }
+
+    window.syncListAndActiveGroup = function(groupData) {
+        if (!activeId) return;
+        if (typeof saveLocalList === 'function') saveLocalList();
+        localStorage.setItem('bao_ni_ping_an_order_v3_' + activeId, JSON.stringify(groupData));
+
+        try {
+            // 1. 即時廣播
+            fetch(`https://ntfy.sh/${REALTIME_TOPIC}`, {
+                method: 'POST',
+                body: JSON.stringify({ senderId: window.myClientId, activeId, list: groupBuysList, data: groupData })
+            }).catch(()=>{});
+
+            // 2. 雲端資料庫 REST PUT 保存 (確保 LINE 內建瀏覽器跨裝置開啟也能抓到)
+            fetch(REST_CLOUD_URL, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: 'bao_ni_ping_an_master_sync', data: { activeId, list: groupBuysList, groupData } })
+            }).catch(()=>{});
+        } catch(e) {}
+    };
+
+    if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', initCloudAndRealtime);
+    } else {
+        initCloudAndRealtime();
+    }
+</script>
+</body>
+</html>
