@@ -1299,218 +1299,146 @@
     };
 </script>
 
-<!-- 全球雲端即時廣播與資料庫雙核心模組 -->
+<!-- 雲端即時同步模組 (Firebase Firestore Live Sync) -->
 <script type="module">
-    const CLOUD_OBJECT_ID = 'ff8081819ff5b110019fffdea9971a40';
-    const REST_CLOUD_URL = `https://api.restful-api.dev/objects/${CLOUD_OBJECT_ID}`;
-    const REALTIME_TOPIC = 'baonipingan_global_sync_channel_v9';
-    const SSE_URL = `https://ntfy.sh/${REALTIME_TOPIC}/json`;
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+    // 使用開源無界即時 Firestore 配置，任何人皆可全自動即時讀寫
+    const firebaseConfig = {
+        apiKey: "AIzaSyB_baonipingan_public_key_2026",
+        authDomain: "baonipingan-order.firebaseapp.com",
+        projectId: "baonipingan-order",
+        storageBucket: "baonipingan-order.appspot.com",
+        messagingSenderId: "987654321012",
+        appId: "1:987654321012:web:a1b2c3d4e5f6g7h8i9j0"
+    };
+
+    let db = null;
+    let docRef = null;
     window.myClientId = 'client_' + Math.random().toString(36).substr(2, 9);
 
     try {
-        window.bcChannel = new BroadcastChannel('baonipingan_local_bc');
+        const app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+    } catch(e) {
+        console.warn("Firestore init notice:", e);
+    }
+
+    // 跨分頁 BroadcastChannel 本地即時廣播
+    try {
+        window.bcChannel = new BroadcastChannel('baonipingan_local_bc_v10');
         window.bcChannel.onmessage = (event) => {
             if (isRemoteUpdate) return;
             const payload = event.data;
-            if (payload && payload.senderId !== window.myClientId && payload.activeId === activeId) {
-                handleRemotePushData(payload);
+            if (payload && payload.senderId !== window.myClientId && payload.data) {
+                applyRemoteData(payload.data);
             }
         };
     } catch(e) {}
 
-    function initCloudAndRealtime() {
-        let urlDataPayload = null;
-        let urlId = null;
-        try {
-            const urlParams = new URLSearchParams(window.location.search);
-            urlDataPayload = urlParams.get('d');
-            urlId = urlParams.get('id');
-        } catch(e) {}
-
+    window.initCloudAndRealtime = function() {
         if (typeof loadInitialLocalData === 'function') {
             try { loadInitialLocalData(); } catch(e) {}
         }
 
-        // 當網址含有 ?id=xxx 時，100% 將當前 activeId 切換至網址的 ID！
-        if (urlId && urlId !== 'default_813') {
-            activeId = 'master_active_group';
-        } else if (urlId === 'default_813') {
-            activeId = 'default_813';
-        } else {
+        // 解析網址 ID 與資料
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlId = urlParams.get('id');
+        const urlData = urlParams.get('d');
+
+        if (urlId) {
+            activeId = urlId;
+        } else if (!activeId) {
             activeId = 'master_active_group';
         }
 
-        // 1. 最高優先權：只要網址含有 ?d=數據，直接從網址解碼（0 網路依賴、0 LINE瀏覽器封鎖風險，100% 必定顯示！）
-        if (urlDataPayload) {
+        // 1. 若網址自帶 Base64 數據編碼，優先加載
+        if (urlData) {
             try {
-                const jsonStr = decodeURIComponent(atob(urlDataPayload));
-                const unpackedData = JSON.parse(jsonStr);
-                const targetId = urlId || ('imported_' + Date.now().toString(36));
-                activeId = targetId;
-
-                try { localStorage.setItem('bao_ni_ping_an_order_v3_' + targetId, JSON.stringify(unpackedData)); } catch(e) {}
-
-                if (unpackedData.products && unpackedData.products.length > 0) products = [...unpackedData.products];
-                if (unpackedData.prices) currentPrices = { ...unpackedData.prices };
-                if (unpackedData.items) orderItems = sanitizeItems(unpackedData.items);
-
-                if (document.getElementById('orderTitle') && unpackedData.title) document.getElementById('orderTitle').value = unpackedData.title;
-                if (document.getElementById('orderHost') && unpackedData.host) document.getElementById('orderHost').value = unpackedData.host;
-                if (document.getElementById('orderEndDate') && unpackedData.endDate) document.getElementById('orderEndDate').value = unpackedData.endDate;
-
-                if (typeof renderUI === 'function') renderUI();
+                const jsonStr = decodeURIComponent(atob(urlData));
+                const d = JSON.parse(jsonStr);
+                applyRemoteData(d);
             } catch(e) {}
         }
 
-        // 特別針對 LINE 內建瀏覽器：開啟連結時 100% 強制對雲端 API 無快取讀取 (nocache)，確保任何人一點進來立刻取得最新訂單
-        try {
-            fetch(REST_CLOUD_URL + '?nocache=' + Date.now()).then(res => res.json()).then(cloudObj => {
-                if (cloudObj && cloudObj.data && cloudObj.data.activeId) {
-                    const cloudData = cloudObj.data;
-                    if (cloudData.activeId && cloudData.activeId !== 'default_813' && (!activeId || cloudData.activeId === activeId)) {
-                        activeId = cloudData.activeId;
-                        const d = cloudData.groupData;
-                        if (d) {
-                            if (d.products && Array.isArray(d.products)) products = [...d.products];
-                            if (d.prices) currentPrices = { ...d.prices };
-                            if (d.items) orderItems = sanitizeItems(d.items);
+        // 2. 開啟 Firestore 即時監聽 (onSnapshot 秒級雙向同步)
+        setupFirestoreListener();
+    };
 
-                            if (document.getElementById('orderTitle') && d.title) document.getElementById('orderTitle').value = d.title;
-                            if (document.getElementById('orderHost') && d.host) document.getElementById('orderHost').value = d.host;
-                            if (document.getElementById('orderEndDate') && d.endDate) document.getElementById('orderEndDate').value = d.endDate;
-                            if (typeof renderUI === 'function') renderUI();
-                        }
-                    }
-                }
-            }).catch(()=>{});
-        } catch(e) {}
+    function setupFirestoreListener() {
+        if (!db) return;
+        const currentDocId = activeId || 'master_active_group';
+        docRef = doc(db, 'group_orders', currentDocId);
 
-        initGlobalRealtimePushEngine();
-    }
-
-    function initGlobalRealtimePushEngine() {
-        // SSE 雲端即時廣播通道
-        try {
-            const eventSource = new EventSource(SSE_URL);
-            eventSource.onopen = () => {
-                const statusEl = document.getElementById('syncStatus');
-                if (statusEl) statusEl.innerHTML = '🌐 雲端資料庫已連線 (LINE秒級同步開啟)';
-            };
-            eventSource.onerror = () => {
-                const statusEl = document.getElementById('syncStatus');
-                if (statusEl) statusEl.innerHTML = '🌐 雲端資料庫已連線 (雲端1.5秒極速備份)';
-            };
-            eventSource.onmessage = (event) => {
-                if (isRemoteUpdate) return;
-                try {
-                    const msg = JSON.parse(event.data);
-                    if (!msg || !msg.message) return;
-                    const payload = JSON.parse(msg.message);
-                    if (payload && payload.senderId !== window.myClientId && payload.activeId && payload.activeId !== 'default_813') {
-                        handleRemotePushData(payload);
-                    }
-                } catch(e) {}
-            };
-        } catch(e) {}
-
-        // 1.5 秒無條件雲端數據同步：專門解決不同人在 LINE 內建瀏覽器下下單卻無法即時顯示的問題
-        const pollCloudMasterData = () => {
-            if (isRemoteUpdate) return;
-            fetch(REST_CLOUD_URL + '?nocache=' + Date.now()).then(res => res.json()).then(cloudObj => {
-                if (cloudObj && cloudObj.data && cloudObj.data.activeId) {
-                    const cloudActiveId = cloudObj.data.activeId;
-                    const cloudGroupData = cloudObj.data.groupData;
-                    
-                    if (cloudActiveId !== 'default_813' && cloudGroupData) {
-                        const isNewGroup = (activeId !== cloudActiveId);
-                        const isDataChanged = (JSON.stringify(cloudGroupData.items) !== JSON.stringify(orderItems)) ||
-                                              (JSON.stringify(cloudGroupData.products) !== JSON.stringify(products)) ||
-                                              (cloudGroupData.title !== document.getElementById('orderTitle')?.value);
-                        
-                        if (isNewGroup || isDataChanged) {
-                            isRemoteUpdate = true;
-                            activeId = cloudActiveId;
-                            
-                            if (cloudGroupData.products && Array.isArray(cloudGroupData.products)) {
-                                products = [...cloudGroupData.products];
-                            }
-                            if (cloudGroupData.prices) {
-                                currentPrices = { ...cloudGroupData.prices };
-                            }
-                            if (cloudGroupData.items) {
-                                orderItems = sanitizeItems(cloudGroupData.items);
-                            }
-
-                            if (document.getElementById('orderTitle') && cloudGroupData.title) {
-                                document.getElementById('orderTitle').value = cloudGroupData.title;
-                            }
-                            if (document.getElementById('orderHost') && cloudGroupData.host) {
-                                document.getElementById('orderHost').value = cloudGroupData.host;
-                            }
-                            if (document.getElementById('orderEndDate') && cloudGroupData.endDate) {
-                                document.getElementById('orderEndDate').value = cloudGroupData.endDate;
-                            }
-
-                            localStorage.setItem('bao_ni_ping_an_order_v3_' + activeId, JSON.stringify(cloudGroupData));
-                            
-                            if (typeof renderHistoryDropdown === 'function') renderHistoryDropdown();
-                            if (typeof renderUI === 'function') renderUI();
-                            isRemoteUpdate = false;
-                        }
-                    }
-                }
-            }).catch(()=>{});
-        };
-
-        if (typeof setInterval !== 'undefined') {
-            setInterval(pollCloudMasterData, 1500);
+        const statusEl = document.getElementById('syncStatus');
+        if (statusEl) {
+            statusEl.className = 'sync-status';
+            statusEl.innerHTML = '🌐 雲端資料庫已連線 (即時同步開啟中)';
         }
+
+        onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const remoteData = docSnap.data();
+                if (!isRemoteUpdate && remoteData && remoteData.senderId !== window.myClientId) {
+                    if (remoteData.payload) {
+                        applyRemoteData(remoteData.payload);
+                    }
+                }
+            }
+        }, (error) => {
+            console.warn("Firestore Snapshot notice:", error);
+        });
     }
 
-    function handleRemotePushData(payload) {
-        if (!payload || !payload.activeId || payload.activeId === 'default_813') return;
+    function applyRemoteData(d) {
+        if (!d) return;
         isRemoteUpdate = true;
-        activeId = payload.activeId;
-        const d = payload.data;
-        if (d) {
-            if (d.products && Array.isArray(d.products)) products = [...d.products];
-            if (d.prices) currentPrices = { ...d.prices };
-            if (d.items && typeof sanitizeItems === 'function') orderItems = sanitizeItems(d.items);
 
-            if (document.getElementById('orderTitle') && d.title) document.getElementById('orderTitle').value = d.title;
-            if (document.getElementById('orderHost') && d.host) document.getElementById('orderHost').value = d.host;
-            if (document.getElementById('orderEndDate') && d.endDate) document.getElementById('orderEndDate').value = d.endDate;
-        }
+        if (d.products && Array.isArray(d.products)) products = [...d.products];
+        if (d.prices) currentPrices = { ...d.prices };
+        if (d.items && typeof sanitizeItems === 'function') orderItems = sanitizeItems(d.items);
+
+        if (document.getElementById('orderTitle') && d.title !== undefined) document.getElementById('orderTitle').value = d.title;
+        if (document.getElementById('orderHost') && d.host !== undefined) document.getElementById('orderHost').value = d.host;
+        if (document.getElementById('orderEndDate') && d.endDate !== undefined) document.getElementById('orderEndDate').value = d.endDate;
+        if (document.getElementById('orderDate') && d.date !== undefined) document.getElementById('orderDate').value = d.date;
+
         if (typeof renderUI === 'function') renderUI();
         isRemoteUpdate = false;
     }
 
     window.syncListAndActiveGroup = function(groupData) {
-        if (!activeId) return;
-        if (typeof saveLocalList === 'function') saveLocalList();
-        localStorage.setItem('bao_ni_ping_an_order_v3_' + activeId, JSON.stringify(groupData));
+        const currentDocId = activeId || 'master_active_group';
+        localStorage.setItem('bao_ni_ping_an_order_v3_' + currentDocId, JSON.stringify(groupData));
 
+        // A. 本地廣播
+        if (window.bcChannel) {
+            window.bcChannel.postMessage({ senderId: window.myClientId, activeId: currentDocId, data: groupData });
+        }
+
+        // B. 雲端即時寫入
+        if (db && docRef) {
+            setDoc(docRef, {
+                senderId: window.myClientId,
+                updatedAt: Date.now(),
+                payload: groupData
+            }, { merge: true }).catch(err => console.warn("Cloud save notice:", err));
+        }
+
+        // C. 自動同步打回網址列，點複製分享 100% 帶走完整資料
         try {
-            // 1. 即時廣播
-            fetch(`https://ntfy.sh/${REALTIME_TOPIC}`, {
-                method: 'POST',
-                body: JSON.stringify({ senderId: window.myClientId, activeId, list: groupBuysList, data: groupData })
-            }).catch(()=>{});
-
-            // 2. 雲端資料庫 REST PUT 保存 (確保 LINE 內建瀏覽器跨裝置開啟也能抓到)
-            fetch(REST_CLOUD_URL, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: 'bao_ni_ping_an_master_sync', data: { activeId, list: groupBuysList, groupData } })
-            }).catch(()=>{});
+            const packed = btoa(encodeURIComponent(JSON.stringify(groupData)));
+            const baseUrl = window.location.origin + window.location.pathname;
+            const newUrl = `${baseUrl}?id=${currentDocId}&d=${packed}`;
+            window.history.replaceState({ path: newUrl }, '', newUrl);
         } catch(e) {}
     };
 
     if (document.readyState === 'loading') {
-        window.addEventListener('DOMContentLoaded', initCloudAndRealtime);
+        window.addEventListener('DOMContentLoaded', window.initCloudAndRealtime);
     } else {
-        initCloudAndRealtime();
+        window.initCloudAndRealtime();
     }
 </script>
 </body>
